@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -61,6 +63,7 @@ func combiner(cmd *cobra.Command, args []string) {
 
 		wordArrUpdated := wordArrRead
 
+		// we want to make sure that all words are at least 6 characters long for sufficient entropy
 		for len(wordArrUpdated[0]) < 6 {
 			for i, word := range wordArrUpdated {
 				if len(word) < 6 {
@@ -72,8 +75,12 @@ func combiner(cmd *cobra.Command, args []string) {
 		}
 
 		wordArr = append(wordArr, wordArrUpdated...)
+		wordArr = randomize(wordArr)
 	}
 
+	// randomize the list so that we can use a straight insert into the database
+	wordArr = randomize(wordArr)
+	wordArr = randomize(wordArr)
 	os.WriteFile("./output/combined.txt", []byte(strings.Join(wordArr, "\n")), 0644)
 }
 
@@ -82,5 +89,13 @@ func extendWord(word string) []string {
 	for char := 'A'; char <= 'Z'; char++ {
 		wordArr = append(wordArr, word+string(char))
 	}
+	return wordArr
+}
+
+func randomize(wordArr []string) []string {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(wordArr), func(i, j int) {
+		wordArr[i], wordArr[j] = wordArr[j], wordArr[i]
+	})
 	return wordArr
 }
